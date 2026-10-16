@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import models
 import schemas
 from database import engine, get_db
+import analyzer
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -77,3 +78,52 @@ def delete_comment(
     db.commit()
 
     return {"deleted": comment_id}
+
+
+@app.post(
+    "/comments/{comment_id}/analyze",
+    response_model=schemas.AnalysisOut,
+)
+def analyze_comment(
+    comment_id: int,
+    db: Session = Depends(get_db),
+):
+    comment = db.get(models.Comment, comment_id)
+
+    if comment is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Comment not found",
+        )
+
+    result = analyzer.analyze_text(comment.text)
+
+    analysis = models.Analysis(
+        comment_id=comment.id,
+        model=analyzer.MODEL,
+        prompt_version=analyzer.PROMPT_VERSION,
+        **result,
+    )
+
+    db.add(analysis)
+    db.commit()
+    db.refresh(analysis)
+
+    return analysis
+
+
+@app.get(
+    "/analyses",
+    response_model=list[schemas.AnalysisOut],
+)
+def list_analyses(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(models.Analysis)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )

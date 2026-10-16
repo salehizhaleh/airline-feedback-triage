@@ -17,3 +17,17 @@ class CommentOut(CommentCreate):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class AnalysisOut(BaseModel):
+    id: int
+    comment_id: int
+    model: str
+    prompt_version: str
+    sentiment: str
+    category: str
+    urgency: str
+    department: str
+    tokens_used: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
