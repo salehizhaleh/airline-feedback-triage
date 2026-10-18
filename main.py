@@ -60,6 +60,21 @@ def get_comment(
 
     return comment
 
+@app.patch("/comments/{comment_id}", response_model=schemas.CommentOut)
+def update_comment(
+    comment_id: int,
+    update: schemas.CommentUpdate,
+    db: Session = Depends(get_db),
+):
+    comment = db.get(models.Comment, comment_id)
+    if comment is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    for field, value in update.model_dump(exclude_unset=True).items():
+        setattr(comment, field, value)
+    db.commit()
+    db.refresh(comment)
+    return comment
+
 
 @app.delete("/comments/{comment_id}")
 def delete_comment(

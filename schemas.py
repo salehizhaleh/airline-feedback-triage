@@ -31,3 +31,10 @@ class AnalysisOut(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CommentUpdate(BaseModel):
+    airline: Optional[str] = None
+    text: Optional[str] = None
+    true_sentiment: Optional[str] = None
+    true_reason: Optional[str] = None
